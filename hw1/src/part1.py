@@ -88,13 +88,13 @@ def simple_concatenate(tensors):
     TODO: Implement a function that concatenates the given sequence of tensors
         in the first dimension and returns the result
     """
-    pass
+    return torch.cat(tensors)
 
 def simple_stack(tensors, dim):
     """
     TODO: Implement a function that concatenates the given sequence of tensors
         along a new dimension(dim) and returns the result.
     """
-    pass
+    return torch.stack(tensors, dim)
 
 

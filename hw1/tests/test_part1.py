@@ -33,3 +33,11 @@ def test_permute():
 
     assert permuted.size() == torch.Size([5, 2, 3])
 
+def test_cat():
+    x = torch.ones(1, 1)
+    y = torch.ones(1, 1)
+    z = torch.ones(1, 1)
+
+    expected = torch.ones(3, 1)
+
+    assert expected.equal(simple_concatenate([x, y, z]))
