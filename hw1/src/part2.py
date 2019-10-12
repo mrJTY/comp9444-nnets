@@ -41,6 +41,7 @@ class LinearModel:
         a float, but raises a Value error if a boolean, list or numpy array is passed in
         hint: consider np.exp()
         """
+        return 1 / (1 + np.exp(-x))
 
     def forward(self, inputs):
         """
@@ -49,6 +50,10 @@ class LinearModel:
         inputs is a numpy array. The bias term is the last element in self.weights.
         hint: call the activation function you have implemented above.
         """
+        bias = self.weights[-1]
+        y = bias + self.weights[0:len(self.weights)-1] * inputs
+        after_sigmoid = self.activation(y)
+        return np.argmax(after_sigmoid)
 
     @staticmethod
     def loss(prediction, label):
@@ -56,6 +61,9 @@ class LinearModel:
         TODO: Return the cross entropy for the given prediction and label
         hint: consider using np.log()
         """
+        if label == prediction:
+            return -np.log(label)
+        return -np.log(1 - prediction)
 
     @staticmethod
     def error(prediction, label):
@@ -65,6 +73,7 @@ class LinearModel:
         For example, if label= 1 and the prediction was 0.8, return 0.2
                      if label= 0 and the preduction was 0.43 return -0.43
         """
+        return label - prediction
 
     def backward(self, inputs, diff):
         """
@@ -117,6 +126,7 @@ def main():
 
             # Calculate loss
             cost = model.loss(output, y)
+            import pdb; pdb.set_trace()
 
             # Calculate difference or differential
             diff = model.error(output, y)
