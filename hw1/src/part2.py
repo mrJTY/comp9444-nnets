@@ -91,6 +91,10 @@ class LinearModel:
         Note: Numpy arrays are passed by reference and can be modified in-place
         """
 
+        # if g(s) = 0 but should be 1..
+        # self.weights = self.weights + self.learning_rate * diff
+        d_out = diff * z * (1-z)
+
     def plot(self, inputs, marker):
         """
         Plot the data and the decision boundary
