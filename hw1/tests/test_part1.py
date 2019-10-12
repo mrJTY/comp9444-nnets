@@ -33,6 +33,36 @@ def test_permute():
 
     assert permuted.size() == torch.Size([5, 2, 3])
 
+def test_simple_matmul():
+    x = torch.tensor([[2,2],
+                      [2,2]
+    ])
+    y = torch.tensor([[2,2],
+                      [2,2]
+    ])
+    product = simple_matrix_mul(x, y)
+    expected_product = torch.tensor([[8,8],
+                                     [8,8]
+    ])
+
+    assert product.equal(expected_product)
+
+def test_broadcastable_matmul():
+    x = torch.tensor([[2,2],
+                      [2,2]
+    ])
+    y = torch.tensor([[2,2],
+                      [2,2]
+    ])
+    product = broadcastable_matrix_mul(x, y)
+    expected_product = torch.tensor([[8,8],
+                                     [8,8]
+    ])
+
+    assert product.equal(expected_product)
+
+
+
 def test_cat():
     x = torch.ones(1, 1)
     y = torch.ones(1, 1)
