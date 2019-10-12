@@ -14,7 +14,7 @@ DOING SO MAY CAUSE YOUR CODE TO FAIL AUTOMATED TESTING.
 import numpy as np
 import pickle as pkl
 import matplotlib.pyplot as plt
-
+import pdb
 
 class LinearModel:
     def __init__(self, num_inputs, learning_rate):
@@ -41,6 +41,9 @@ class LinearModel:
         a float, but raises a Value error if a boolean, list or numpy array is passed in
         hint: consider np.exp()
         """
+        if type(x) in [bool, np.array, list]:
+            raise ValueError("Expecting a float as input for activation")
+
         return 1 / (1 + np.exp(-x))
 
     def forward(self, inputs):
@@ -50,10 +53,14 @@ class LinearModel:
         inputs is a numpy array. The bias term is the last element in self.weights.
         hint: call the activation function you have implemented above.
         """
-        bias = self.weights[-1]
-        y = bias + self.weights[0:len(self.weights)-1] * inputs
-        after_sigmoid = self.activation(y)
-        return np.argmax(after_sigmoid)
+
+        bias_weight = self.weights[-1]
+        input_weights = np.array(self.weights[0:len(self.weights)-1])
+
+        # this must be a float
+        before_activation = bias_weight + np.dot(input_weights, inputs)
+        transfered = self.activation(before_activation)
+        return transfered
 
     @staticmethod
     def loss(prediction, label):
@@ -127,10 +134,10 @@ def main():
         for x, y in zip(inputs, labels):
             # Get prediction
             output = model.forward(x)
+            import pdb; pdb.set_trace()
 
             # Calculate loss
             cost = model.loss(output, y)
-            import pdb; pdb.set_trace()
 
             # Calculate difference or differential
             diff = model.error(output, y)
