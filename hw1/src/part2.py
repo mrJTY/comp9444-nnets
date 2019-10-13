@@ -53,14 +53,16 @@ class LinearModel:
         inputs is a numpy array. The bias term is the last element in self.weights.
         hint: call the activation function you have implemented above.
         """
+        z = self.calc_z(inputs)
+        a = self.activation(z)
+        return a
 
+    def calc_z(self, inputs):
+        # z = wT x + b
         bias_weight = self.weights[-1]
         input_weights = np.array(self.weights[0:len(self.weights)-1])
+        return np.dot(input_weights, inputs) + bias_weight
 
-        # this must be a float
-        before_activation = bias_weight + np.dot(input_weights, inputs)
-        transfered = self.activation(before_activation)
-        return transfered
 
     @staticmethod
     def loss(prediction, label):
@@ -104,7 +106,7 @@ class LinearModel:
         Note: Numpy arrays are passed by reference and can be modified in-place
         """
 
-        z = self.forward(inputs)
+        z = self.calc_z(inputs)
 
         # Derivative of error with respect to changes in z
         # dE/dz is (z-t) which is the diff
@@ -112,26 +114,25 @@ class LinearModel:
 
         dz_ds = z * (1-z)
 
-        # d_out = d1 = d2
-        d_out = diff * dz_ds
+        # dE_dw1 = dE_dz * inputs[0]
+        # dE_dw2 = dE_dz * inputs[1]
+        # dE_dw = np.array([dE_dw1, dE_dw2])
 
-        d1 = d_out
+        dE_dw =  dE_dz * inputs
 
-        d2 = d_out
-
-        dE_dw1 = d1 * inputs[0]
-        dE_dw2 = d2 * inputs[1]
-
-        dE_dw = np.array([dE_dw1, dE_dw2])
+        # TODO: bias is not updating..
+        dE_db = 0
 
 
         bias_weight = self.weights[-1]
         input_weights = np.array(self.weights[0:len(self.weights)-1])
 
-        bias_weight_update = self.lr * bias_weight
+        bias_weight_update = self.lr * dE_db
         input_weights_update = self.lr * dE_dw
 
-        if diff <= 0:
+        #import pdb; pdb.set_trace()
+
+        if diff < 0:
             direction = 1
         else:
             direction = -1
