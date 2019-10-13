@@ -128,14 +128,18 @@ class LinearModel:
         bias_weight = self.weights[-1]
         input_weights = np.array(self.weights[0:len(self.weights)-1])
 
-        # TODO bias_weight_update = self.learning_rate * bias_weight
-        bias_weight_update = 0
+        bias_weight_update = self.lr * bias_weight
         input_weights_update = self.lr * dE_dw
 
+        if diff <= 0:
+            direction = 1
+        else:
+            direction = -1
+
         # Update bias weight
-        self.weights[-1] = bias_weigth = bias_weight - bias_weight_update
+        self.weights[-1] = bias_weigth = bias_weight + (direction * bias_weight_update)
         # Update input weights
-        self.weights[0:len(self.weights)-1] = input_weights - input_weights_update
+        self.weights[0:len(self.weights)-1] = input_weights + (direction * input_weights_update)
 
     def plot(self, inputs, marker):
         """
