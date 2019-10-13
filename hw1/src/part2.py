@@ -110,19 +110,13 @@ class LinearModel:
 
         # Derivative of error with respect to changes in z
         # dE/dz is (z-t) which is the diff
+
+        # Reference
+        # Andrew Ng: https://www.youtube.com/watch?v=2BkqApHKwn0&list=PLkDaE6sCZn6Ec-XTbcX1uRg2_u4xOEky0&index=20
         dE_dz = diff
-
         dz_ds = z * (1-z)
-
-        # dE_dw1 = dE_dz * inputs[0]
-        # dE_dw2 = dE_dz * inputs[1]
-        # dE_dw = np.array([dE_dw1, dE_dw2])
-
         dE_dw =  dE_dz * inputs
-
-        # TODO: bias is not updating..
-        dE_db = 0
-
+        dE_db = dE_dz
 
         bias_weight = self.weights[-1]
         input_weights = np.array(self.weights[0:len(self.weights)-1])
@@ -130,17 +124,10 @@ class LinearModel:
         bias_weight_update = self.lr * dE_db
         input_weights_update = self.lr * dE_dw
 
-        #import pdb; pdb.set_trace()
-
-        if diff < 0:
-            direction = 1
-        else:
-            direction = -1
-
         # Update bias weight
-        self.weights[-1] = bias_weigth = bias_weight + (direction * bias_weight_update)
+        self.weights[-1] = bias_weigth = bias_weight + (bias_weight_update)
         # Update input weights
-        self.weights[0:len(self.weights)-1] = input_weights + (direction * input_weights_update)
+        self.weights[0:len(self.weights)-1] = input_weights + (input_weights_update)
 
     def plot(self, inputs, marker):
         """
