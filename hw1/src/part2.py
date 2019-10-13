@@ -68,9 +68,15 @@ class LinearModel:
         TODO: Return the cross entropy for the given prediction and label
         hint: consider using np.log()
         """
-        if label == prediction:
-            return -np.log(label)
-        return -np.log(1 - prediction)
+
+        # Cross entropy,
+        # Return a low cost if they match
+        # But return a high cost when the values don't match
+        if label == 1:
+            cost = -np.log(prediction)
+        else:
+            cost = -np.log(1 - prediction)
+        return cost
 
     @staticmethod
     def error(prediction, label):
@@ -98,9 +104,38 @@ class LinearModel:
         Note: Numpy arrays are passed by reference and can be modified in-place
         """
 
-        # if g(s) = 0 but should be 1..
-        # self.weights = self.weights + self.learning_rate * diff
-        d_out = diff * z * (1-z)
+        z = self.forward(inputs)
+
+        # Derivative of error with respect to changes in z
+        # dE/dz is (z-t) which is the diff
+        dE_dz = diff
+
+        dz_ds = z * (1-z)
+
+        # d_out = d1 = d2
+        d_out = diff * dz_ds
+
+        d1 = d_out
+
+        d2 = d_out
+
+        dE_dw1 = d1 * inputs[0]
+        dE_dw2 = d2 * inputs[1]
+
+        dE_dw = np.array([dE_dw1, dE_dw2])
+
+
+        bias_weight = self.weights[-1]
+        input_weights = np.array(self.weights[0:len(self.weights)-1])
+
+        # TODO bias_weight_update = self.learning_rate * bias_weight
+        bias_weight_update = 0
+        input_weights_update = self.lr * dE_dw
+
+        # Update bias weight
+        self.weights[-1] = bias_weigth = bias_weight - bias_weight_update
+        # Update input weights
+        self.weights[0:len(self.weights)-1] = input_weights - input_weights_update
 
     def plot(self, inputs, marker):
         """
@@ -134,7 +169,6 @@ def main():
         for x, y in zip(inputs, labels):
             # Get prediction
             output = model.forward(x)
-            import pdb; pdb.set_trace()
 
             # Calculate loss
             cost = model.loss(output, y)
