@@ -85,8 +85,10 @@ class NNModel:
         not raw softmax values, so just using torch.nn.CrossEntropyLoss is incorrect.
 
         Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.).
+
+        https://medium.com/@zhang_yang/understanding-cross-entropy-implementation-in-pytorch-softmax-log-softmax-nll-cross-entropy-416a2b200e34
         """
-        self.lossfn = None
+        self.lossfn = F.nll_loss
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
 
         self.num_train_samples = len(self.trainloader)
