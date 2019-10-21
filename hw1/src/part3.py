@@ -83,14 +83,23 @@ class NNModel:
         TODO: Set appropriate loss function such that learning is equivalent to minimizing the
         cross entropy loss. Note that we are outputting log-softmax values from our networks,
         not raw softmax values, so just using torch.nn.CrossEntropyLoss is incorrect.
-        
-        Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.). 
+
+        Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.).
         """
         self.lossfn = None
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
 
         self.num_train_samples = len(self.trainloader)
         self.num_test_samples = len(self.testloader)
+
+    def _process_one_row(self, X):
+        row = X[0].reshape(28,28)
+        # First 8 rows
+        for i in X[1:9]:
+            img = i.reshape(28,28)
+            # Stack horizontally...
+            row = np.hstack((row, i.reshape(28,28)))
+        return row
 
     def view_batch(self):
         """
@@ -111,17 +120,17 @@ class NNModel:
         # Get one batch of data (first 64)
         it = iter(self.trainloader)
         X, y = it.next()
-        images = X[0].reshape(28,28)
-
-        # First 8 rows
-        for i in X[1:9]:
-            img = i.reshape(28,28)
-            # Stack horizontally...
-            images = np.hstack((images, i.reshape(28,28)))
 
 
-        import pdb
-        pdb.set_trace()
+        segment_length = 8
+        rnge = range(64)
+        cuts = [rnge[x:x+segment_length] for x in range(0,len(rnge),segment_length)]
+        print(cuts)
+
+        rows = [self._process_one_row(X[i]) for i in cuts]
+
+        images = np.vstack((rows[0], rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], rows[7]))
+
         y_out = y.reshape(8,8)
         return images, y_out
 
