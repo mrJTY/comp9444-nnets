@@ -105,6 +105,27 @@ class NNModel:
            2) An int 8x8 numpy array of labels corresponding to this tiling
         """
 
+        pixels_x = 28
+        pixels_y = 28
+
+        # Get one batch of data (first 64)
+        it = iter(self.trainloader)
+        X, y = it.next()
+        images = X[0].reshape(28,28)
+
+        # First 8 rows
+        for i in X[1:9]:
+            img = i.reshape(28,28)
+            # Stack horizontally...
+            images = np.hstack((images, i.reshape(28,28)))
+
+
+        import pdb
+        pdb.set_trace()
+        y_out = y.reshape(8,8)
+        return images, y_out
+
+
     def train_step(self):
         """
         Used for submission tests and may be usefull for debugging
