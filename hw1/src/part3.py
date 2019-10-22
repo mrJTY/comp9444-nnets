@@ -44,6 +44,26 @@ class FeedForward(nn.Module):
     Linear (256) -> ReLU -> Linear(64) -> ReLU -> Linear(10) -> ReLU-> LogSoftmax
     """
 
+    def __init__(self):
+        super().__init__()
+
+        input_shape = 28*28
+        output_shape = 10
+        self.fc1 = nn.Linear(in_features=input_shape, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=64)
+        self.fc3 = nn.Linear(in_features=64, out_features=10)
+
+    def forward(self, x):
+        # 64x784
+        flattened = x.view(x.shape[0], -1)
+
+        relu1_output = F.relu(self.fc1(flattened))
+        relu2_output = F.relu(self.fc2(relu1_output))
+        relu3_output = F.relu(self.fc3(relu2_output))
+
+        softmax_output = F.log_softmax(relu3_output, dim=1)
+        return softmax_output
+
 
 class CNN(nn.Module):
     """
