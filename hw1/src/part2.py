@@ -14,7 +14,7 @@ DOING SO MAY CAUSE YOUR CODE TO FAIL AUTOMATED TESTING.
 import numpy as np
 import pickle as pkl
 import matplotlib.pyplot as plt
-
+import pdb
 
 class LinearModel:
     def __init__(self, num_inputs, learning_rate):
@@ -41,6 +41,10 @@ class LinearModel:
         a float, but raises a Value error if a boolean, list or numpy array is passed in
         hint: consider np.exp()
         """
+        if type(x) in [bool, np.array, list]:
+            raise ValueError("Expecting a float as input for activation")
+
+        return 1 / (1 + np.exp(-x))
 
     def forward(self, inputs):
         """
@@ -49,6 +53,16 @@ class LinearModel:
         inputs is a numpy array. The bias term is the last element in self.weights.
         hint: call the activation function you have implemented above.
         """
+        z = self.calc_z(inputs)
+        a = self.activation(z)
+        return a
+
+    def calc_z(self, inputs):
+        # z = wT x + b
+        bias_weight = self.weights[-1]
+        input_weights = np.array(self.weights[0:len(self.weights)-1])
+        return np.dot(input_weights, inputs) + bias_weight
+
 
     @staticmethod
     def loss(prediction, label):
@@ -56,6 +70,15 @@ class LinearModel:
         TODO: Return the cross entropy for the given prediction and label
         hint: consider using np.log()
         """
+
+        # Cross entropy,
+        # Return a low cost if they match
+        # But return a high cost when the values don't match
+        if label == 1:
+            cost = -np.log(prediction)
+        else:
+            cost = -np.log(1 - prediction)
+        return cost
 
     @staticmethod
     def error(prediction, label):
@@ -65,6 +88,7 @@ class LinearModel:
         For example, if label= 1 and the prediction was 0.8, return 0.2
                      if label= 0 and the preduction was 0.43 return -0.43
         """
+        return label - prediction
 
     def backward(self, inputs, diff):
         """
@@ -81,6 +105,29 @@ class LinearModel:
 
         Note: Numpy arrays are passed by reference and can be modified in-place
         """
+
+        z = self.calc_z(inputs)
+
+        # Derivative of error with respect to changes in z
+        # dE/dz is (z-t) which is the diff
+
+        # Reference
+        # Andrew Ng: https://www.youtube.com/watch?v=2BkqApHKwn0&list=PLkDaE6sCZn6Ec-XTbcX1uRg2_u4xOEky0&index=20
+        dE_dz = diff
+        dz_ds = z * (1-z)
+        dE_dw =  dE_dz * inputs
+        dE_db = dE_dz
+
+        bias_weight = self.weights[-1]
+        input_weights = np.array(self.weights[0:len(self.weights)-1])
+
+        bias_weight_update = self.lr * dE_db
+        input_weights_update = self.lr * dE_dw
+
+        # Update bias weight
+        self.weights[-1] = bias_weigth = bias_weight + (bias_weight_update)
+        # Update input weights
+        self.weights[0:len(self.weights)-1] = input_weights + (input_weights_update)
 
     def plot(self, inputs, marker):
         """

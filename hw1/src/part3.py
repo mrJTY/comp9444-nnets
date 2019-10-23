@@ -44,6 +44,26 @@ class FeedForward(nn.Module):
     Linear (256) -> ReLU -> Linear(64) -> ReLU -> Linear(10) -> ReLU-> LogSoftmax
     """
 
+    def __init__(self):
+        super().__init__()
+
+        input_shape = 28*28
+        output_shape = 10
+        self.fc1 = nn.Linear(in_features=input_shape, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=64)
+        self.fc3 = nn.Linear(in_features=64, out_features=10)
+
+    def forward(self, x):
+        # 64x784
+        flattened = x.view(x.shape[0], -1)
+
+        relu1_output = F.relu(self.fc1(flattened))
+        relu2_output = F.relu(self.fc2(relu1_output))
+        relu3_output = F.relu(self.fc3(relu2_output))
+
+        softmax_output = F.log_softmax(relu3_output, dim=1)
+        return softmax_output
+
 
 class CNN(nn.Module):
     """
@@ -57,6 +77,44 @@ class CNN(nn.Module):
     Hint: You will need to reshape outputs from the last conv layer prior to feeding them into
     the linear layers.
     """
+
+    def __init__(self):
+        super().__init__()
+
+        self.batch_size = 64 # x.shape[0] # 64
+        self.input_shape = 28*28 # image 28x28
+        self.output_shape = 10 # num outputs
+
+        # weight of size 10 1 5 5, expected input[64, 1, 28, 28] to have 1 channel
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=10, kernel_size=5, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=10, out_channels=50, kernel_size=5, stride=1)
+
+        # Reshape the output cnn to match. 800 = 50channels x 4x4 convulution output
+        self.fc3 = nn.Linear(in_features=800, out_features=256)
+        self.fc4 = nn.Linear(in_features=256, out_features=self.output_shape)
+
+    def forward(self, x):
+        # 64x784
+        n_rows = x.shape[0]
+        flattened = x.view(n_rows, -1) # or use x.shape[0]
+
+        relu_output1 = F.relu(self.conv1(x))
+        maxpool_output2 = F.max_pool2d(relu_output1, 2, 2)
+
+        relu_output2 = F.relu(self.conv2(maxpool_output2))
+        # 64batch x 50 channels x (4x4 per convovled image)
+        maxpool_output2 = F.max_pool2d(relu_output2, 2, 2)
+
+        # Reshape the CNN to match linear: 64x800
+        cnn_output_reshaped = maxpool_output2.view(n_rows, 50*4*4)
+
+        relu_output3 = F.relu(self.fc3(cnn_output_reshaped))
+
+        softmax_output = F.log_softmax(relu_output3, dim=1)
+
+        return softmax_output
+
+
 
 class NNModel:
     def __init__(self, network, learning_rate):
@@ -83,14 +141,25 @@ class NNModel:
         TODO: Set appropriate loss function such that learning is equivalent to minimizing the
         cross entropy loss. Note that we are outputting log-softmax values from our networks,
         not raw softmax values, so just using torch.nn.CrossEntropyLoss is incorrect.
-        
-        Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.). 
+
+        Hint: All networks output log-softmax values (i.e. log probabilities or.. likelihoods.).
+
+        https://medium.com/@zhang_yang/understanding-cross-entropy-implementation-in-pytorch-softmax-log-softmax-nll-cross-entropy-416a2b200e34
         """
-        self.lossfn = None
+        self.lossfn = F.nll_loss
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
 
         self.num_train_samples = len(self.trainloader)
         self.num_test_samples = len(self.testloader)
+
+    def _process_one_row(self, X):
+        row = X[0].reshape(28,28)
+        # First 8 rows
+        for i in X[1:9]:
+            img = i.reshape(28,28)
+            # Stack horizontally...
+            row = np.hstack((row, i.reshape(28,28)))
+        return row
 
     def view_batch(self):
         """
@@ -104,6 +173,27 @@ class NNModel:
 
            2) An int 8x8 numpy array of labels corresponding to this tiling
         """
+
+        pixels_x = 28
+        pixels_y = 28
+
+        # Get one batch of data (first 64)
+        it = iter(self.trainloader)
+        X, y = it.next()
+
+
+        segment_length = 8
+        rnge = range(64)
+        cuts = [rnge[x:x+segment_length] for x in range(0,len(rnge),segment_length)]
+        print(cuts)
+
+        rows = [self._process_one_row(X[i]) for i in cuts]
+
+        images = np.vstack((rows[0], rows[1], rows[2], rows[3], rows[4], rows[5], rows[6], rows[7]))
+
+        y_out = y.reshape(8,8)
+        return images, y_out
+
 
     def train_step(self):
         """
