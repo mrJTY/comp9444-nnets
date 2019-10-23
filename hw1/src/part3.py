@@ -78,6 +78,44 @@ class CNN(nn.Module):
     the linear layers.
     """
 
+    def __init__(self):
+        super().__init__()
+
+        self.batch_size = 64 # x.shape[0] # 64
+        self.input_shape = 28*28 # image 28x28
+        self.output_shape = 10 # num outputs
+
+        # weight of size 10 1 5 5, expected input[64, 1, 28, 28] to have 1 channel
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=10, kernel_size=5, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=10, out_channels=50, kernel_size=5, stride=1)
+
+        # Reshape the output cnn to match. 800 = 50channels x 4x4 convulution output
+        self.fc3 = nn.Linear(in_features=800, out_features=256)
+        self.fc4 = nn.Linear(in_features=256, out_features=self.output_shape)
+
+    def forward(self, x):
+        # 64x784
+        n_rows = x.shape[0]
+        flattened = x.view(n_rows, -1) # or use x.shape[0]
+
+        relu_output1 = F.relu(self.conv1(x))
+        maxpool_output2 = F.max_pool2d(relu_output1, 2, 2)
+
+        relu_output2 = F.relu(self.conv2(maxpool_output2))
+        # 64batch x 50 channels x (4x4 per convovled image)
+        maxpool_output2 = F.max_pool2d(relu_output2, 2, 2)
+
+        # Reshape the CNN to match linear: 64x800
+        cnn_output_reshaped = maxpool_output2.view(n_rows, 50*4*4)
+
+        relu_output3 = F.relu(self.fc3(cnn_output_reshaped))
+
+        softmax_output = F.log_softmax(relu_output3, dim=1)
+
+        return softmax_output
+
+
+
 class NNModel:
     def __init__(self, network, learning_rate):
         """
