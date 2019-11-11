@@ -143,6 +143,15 @@ def measures(outputs, labels):
 
     outputs and labels are torch tensors.
     """
+    # TODO: is round here ok?
+    x = np.round(outputs.data.numpy())
+    y = labels.data.numpy()
+
+    tp = sum(np.where((x == 1) & (y == 1), 1, 0))
+    tn = sum(np.where((x == 0) & (y == 0), 1, 0))
+    fp = sum(np.where((x == 1) & (y == 0), 1, 0))
+    fn = sum(np.where((x == 0) & (y == 1), 1, 0))
+    return tp, tn, fp, fn
 
 
 def main():
@@ -169,7 +178,8 @@ def main():
     criterion = lossFunc()
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
 
-    for epoch in range(10):
+    # TODO: Change back to 10
+    for epoch in range(1):
         running_loss = 0
 
         for i, batch in enumerate(trainLoader):
