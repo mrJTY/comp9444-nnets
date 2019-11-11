@@ -42,12 +42,14 @@ class NetworkLstm(tnn.Module):
         """
 
         input_dim = 50
-        hidden_dim = 100
+        self.hidden_dim = 100
         n_layers = 1
 
-        self.lstm_layer = torch.nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=True)
-        self.fc2 = torch.nn.Linear(in_features=hidden_dim, out_features=64)
+        self.lstm_layer = torch.nn.LSTM(input_size=input_dim, hidden_size=self.hidden_dim, num_layers=n_layers, batch_first=True)
+        self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
+
+
 
     def forward(self, input, length):
         """
@@ -57,10 +59,17 @@ class NetworkLstm(tnn.Module):
         """
 
         # Input is 64x146x50
+        # Assume batch first
+        # Batch Size: 64
+        # Seq Length of a doc: 146 (varies)
+        # Input Size: 50
+
         # Length is 64
 
-        # TODO: Do i need to only get the 50 dim?
+        # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
         out, hidden = self.lstm_layer(input)
+
+        # Out is 64 batch x 42 seq x 100 hidden
 
         # FIXME
         fc2_output = self.fc2(hidden)
