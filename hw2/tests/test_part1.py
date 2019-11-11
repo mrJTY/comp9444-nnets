@@ -1,4 +1,4 @@
-import hw2.src.part1 as p1
+import hw2 as p1
 import torch
 
 # def test_elmann_cell():
