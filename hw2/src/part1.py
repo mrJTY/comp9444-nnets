@@ -19,8 +19,14 @@ class rnn(torch.nn.Module):
     def __init__(self):
         super(rnn, self).__init__()
 
-        self.ih = torch.nn.Linear(64, 128)
-        self.hh = torch.nn.Linear(128, 128)
+        n_inputs = 64
+        n_neurons = 128
+        self.ih = torch.nn.Linear(n_inputs, n_neurons)
+        self.hh = torch.nn.Linear(n_neurons, n_neurons)
+
+        #self.Wx = torch.randn(n_inputs, n_neurons)
+        #self.Wy = torch.randn(n_neurons, n_neurons)
+
 
     def rnnCell(self, input, hidden):
         """
@@ -30,6 +36,11 @@ class rnn(torch.nn.Module):
               some input (inputDim = 64) and the current hidden state
               (hiddenDim = 128), and return the new hidden state.
         """
+        self.Y0 = torch.tanh(torch.mm(input, self.ih))
+        self.Y1 = torch.tanh(torch.mm(self.Y0, self.hh) + torch.mm(hidden, self.ih))
+
+        return self.Y1
+
 
     def forward(self, input):
         hidden = torch.zeros(128)
@@ -41,6 +52,7 @@ class rnn(torch.nn.Module):
               Return the final hidden state after the
               last input in the sequence has been processed.
         """
+        h_t = torch.tanh(torch.mm(input, self.Wx) + torch.mm(hidden, self.Wy))
 
 class rnnSimplified(torch.nn.Module):
 
@@ -51,11 +63,12 @@ class rnnSimplified(torch.nn.Module):
               the network defined by this class is equivalent to the
               one defined in class "rnn".
         """
-        self.net = None
+        input_size=64
+        hidden_size=128
+        self.net = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, batch_first=True)
 
     def forward(self, input):
-        _, hidden = self.net(input)
-
+        out, hidden = self.net(input)
         return hidden
 
 def lstm(input, hiddenSize):
@@ -63,8 +76,12 @@ def lstm(input, hiddenSize):
     TODO: Let variable lstm be an instance of torch.nn.LSTM.
           Variable input is of size [batchSize, seqLength, inputDim]
     """
-    lstm = None
-    return lstm(input)
+    # batch_first: input and output tensors are provided as (batch, seq, feature)
+    batch_size = input.shape[0]
+    seq_length = input.shape[1]
+    input_size = input.shape[2]
+    cell = torch.nn.LSTM(input_size=input_size, hidden_size=hiddenSize, batch_first=True)
+    return cell(input)
 
 def conv(input, weight):
     """
@@ -73,3 +90,4 @@ def conv(input, weight):
           The convolution should be along the sequence axis.
           input is of size [batchSize, inputDim, seqLength]
     """
+    torch.nn.Conv1d
