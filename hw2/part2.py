@@ -41,12 +41,34 @@ class NetworkLstm(tnn.Module):
         Create and initialise weights and biases for the layers.
         """
 
+        input_dim = 50
+        hidden_dim = 100
+        n_layers = 1
+
+        self.lstm_layer = torch.nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=True)
+        self.fc2 = torch.nn.Linear(in_features=hidden_dim, out_features=64)
+        self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
+
     def forward(self, input, length):
         """
         DO NOT MODIFY FUNCTION SIGNATURE
         TODO:
         Create the forward pass through the network.
         """
+
+        # Input is 64x146x50
+        # Length is 64
+
+        # TODO: Do i need to only get the 50 dim?
+        out, hidden = self.lstm_layer(input)
+
+        # FIXME
+        fc2_output = self.fc2(hidden)
+        relu_output = torch.relu(fc2_output)
+
+        fc3_output = self.fc3(relu_output)
+        return fc3_output
+
 
 
 # Class for creating the neural network.
