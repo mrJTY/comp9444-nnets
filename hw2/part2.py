@@ -41,17 +41,17 @@ class NetworkLstm(tnn.Module):
         Create and initialise weights and biases for the layers.
         """
 
-        input_dim = 50
-        batch_size = 64
+        self.input_dim = 50
+        self.batch_size = 64
         self.hidden_dim = 100
+        self.num_layers = 1
 
-        self.lstm_layer = torch.nn.LSTM(input_size=input_dim, hidden_size=self.hidden_dim, batch_first=True)
+        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True)
         self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
 
-        self.hidden = torch.randn(batch_size, 1)
-
-
+        # self.hidden = torch.randn(2, 1, 64, 100)
+        self.hidden = torch.randn(self.num_layers, self.batch_size, self.hidden_dim)
 
     def forward(self, input, length):
         """
@@ -70,19 +70,26 @@ class NetworkLstm(tnn.Module):
 
         # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
         out, hidden = self.lstm_layer(input)
-        self.hidden = hidden[0] # Hideen through out
+        self.hidden = hidden[0]  # Hideen through out
         most_recent_hidden = hidden[1]
 
         # Out is 64 batch x 42 seq x 100 hidden
 
-        # FIXME: Is this hidden[0] or hidden[1]?
+        # Pass to a 100 node fc
         fc2_output = self.fc2(out)
         relu_output = torch.relu(fc2_output)
 
         fc3_output = self.fc3(relu_output)
         softmax_output = torch.softmax(fc3_output, dim=1)
-        return softmax_output
 
+        # Hack to ignore the seq array
+        out = torch.zeros(softmax_output.size(0))
+        for i in range(0, softmax_output.size(0)):
+            out[i] = softmax_output[i][0][0]
+
+        # output must just be a single dimension 64 tensor(batch) x 1
+
+        return out
 
 
 # Class for creating the neural network.
