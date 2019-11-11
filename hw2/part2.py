@@ -42,12 +42,14 @@ class NetworkLstm(tnn.Module):
         """
 
         input_dim = 50
+        batch_size = 64
         self.hidden_dim = 100
-        n_layers = 1
 
-        self.lstm_layer = torch.nn.LSTM(input_size=input_dim, hidden_size=self.hidden_dim, num_layers=n_layers, batch_first=True)
+        self.lstm_layer = torch.nn.LSTM(input_size=input_dim, hidden_size=self.hidden_dim, batch_first=True)
         self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
+
+        self.hidden = torch.randn(batch_size, 1)
 
 
 
@@ -68,11 +70,13 @@ class NetworkLstm(tnn.Module):
 
         # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
         out, hidden = self.lstm_layer(input)
+        self.hidden = hidden[0] # Hideen through out
+        most_recent_hidden = hidden[1]
 
         # Out is 64 batch x 42 seq x 100 hidden
 
-        # FIXME
-        fc2_output = self.fc2(hidden)
+        # FIXME: Is this hidden[0] or hidden[1]?
+        fc2_output = self.fc2(out)
         relu_output = torch.relu(fc2_output)
 
         fc3_output = self.fc3(relu_output)
@@ -119,6 +123,7 @@ def lossFunc():
     will add a sigmoid to the output and calculate the binary
     cross-entropy.
     """
+    return torch.nn.BCELoss()
 
 
 def measures(outputs, labels):
