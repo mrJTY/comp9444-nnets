@@ -80,7 +80,8 @@ class NetworkLstm(tnn.Module):
         relu_output = torch.relu(fc2_output)
 
         fc3_output = self.fc3(relu_output)
-        return fc3_output
+        softmax_output = torch.softmax(fc3_output, dim=1)
+        return softmax_output
 
 
 
