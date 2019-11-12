@@ -65,10 +65,13 @@ class rnnSimplified(torch.nn.Module):
         input_size = 64
         hidden_size = 128
 
-        self.net = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, num_layers=1, batch_first=True)
+        self.net = torch.nn.RNNCell(input_size=input_size, hidden_size=hidden_size, bias=False, nonlinearity='tanh')
 
     def forward(self, input):
-        _, hidden = self.net(input)
+        seq_len = input.size(0)
+        for i in range(0, seq_len):
+            x = input[i]
+            hidden = self.net(x)
         return hidden
 
 

@@ -46,7 +46,7 @@ def test_rnn_simplified():
     rnn = p1.rnnSimplified()
     new_hidden = rnn.forward(input_vector)
 
-    assert new_hidden.shape == torch.Size([1, 1, 128])
+    assert new_hidden.shape == torch.Size([1, 128])
 
 def test_conv():
     batch_size = 1
