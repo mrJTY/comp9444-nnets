@@ -64,7 +64,8 @@ class rnnSimplified(torch.nn.Module):
         """
         input_size = 64
         hidden_size = 128
-        self.net = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, batch_first=True)
+
+        self.net = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, num_layers=1, batch_first=True)
 
     def forward(self, input):
         _, hidden = self.net(input)
