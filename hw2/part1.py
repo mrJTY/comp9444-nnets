@@ -23,7 +23,7 @@ class rnn(torch.nn.Module):
         self.ih = torch.nn.Linear(64, 128)
         self.hh = torch.nn.Linear(128, 128)
 
-        self.W_ih = torch.randn(64)
+        self.W_ih = torch.randn(128)
         self.W_hh = torch.randn(128)
 
     def rnnCell(self, input, hidden):
@@ -34,11 +34,9 @@ class rnn(torch.nn.Module):
               some input (inputDim = 64) and the current hidden state
               (hiddenDim = 128), and return the new hidden state.
         """
-        x = self.ih(input)
-        x = self.hh(x)
-        ht_minus_1 = self.W_hh * x
-        ht = self.W_hh * hidden
-        new_hidden_state = torch.tanh(ht_minus_1 + ht)
+        wih_x = self.ih(input) * self.W_ih
+        whh_hidden = self.hh(hidden) * self.W_hh
+        new_hidden_state = torch.tanh(wih_x + whh_hidden)
         return new_hidden_state
 
     def forward(self, input):
