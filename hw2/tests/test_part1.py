@@ -38,7 +38,7 @@ def test_rnn_cell():
     rnn = p1.rnn()
     new_hidden = rnn.forward(input_vector)
 
-    assert new_hidden.shape == torch.Size([1, 1, 128])
+    assert new_hidden.shape == torch.Size([1, 128])
 
 
 def test_rnn_simplified():

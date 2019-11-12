@@ -23,9 +23,6 @@ class rnn(torch.nn.Module):
         self.ih = torch.nn.Linear(64, 128)
         self.hh = torch.nn.Linear(128, 128)
 
-        self.W_ih = torch.randn(128)
-        self.W_hh = torch.randn(128)
-
     def rnnCell(self, input, hidden):
         """
         TODO: Using only the above defined linear layers and a tanh
@@ -34,9 +31,9 @@ class rnn(torch.nn.Module):
               some input (inputDim = 64) and the current hidden state
               (hiddenDim = 128), and return the new hidden state.
         """
-        wih_x = self.ih(input) # * self.W_ih
-        whh_hidden = self.hh(hidden) # * self.W_hh
-        new_hidden_state = torch.tanh(wih_x + whh_hidden)
+        x = self.ih(input)
+        hidden = self.hh(hidden)
+        new_hidden_state = torch.tanh(x + hidden)
         return new_hidden_state
 
     def forward(self, input):
@@ -49,8 +46,11 @@ class rnn(torch.nn.Module):
               Return the final hidden state after the
               last input in the sequence has been processed.
         """
-        new_hidden_state = self.rnnCell(input, hidden)
-        return new_hidden_state
+        seq_len = input.size(0)
+        # Pass through the seq
+        for i in range(0, seq_len):
+            hidden = self.rnnCell(input[i], hidden)
+        return hidden
 
 
 class rnnSimplified(torch.nn.Module):
