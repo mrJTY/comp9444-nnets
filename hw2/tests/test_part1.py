@@ -1,4 +1,4 @@
-import hw2 as p1
+import hw2.part1 as p1
 import torch
 
 # def test_elmann_cell():
@@ -26,5 +26,10 @@ def test_lstm():
     input = torch.randn((batch_size, seq, input_dim))
     out, hidden = p1.lstm(input, hidden_size)
 
+def test_rnn_simplified():
+    input_vector = torch.randn(1, 1, 64)
+    rnn = p1.rnnSimplified()
+    hidden = rnn.forward(input_vector)
 
+    assert hidden.shape == torch.Size([1, 1, 128])
 

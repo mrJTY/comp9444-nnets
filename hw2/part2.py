@@ -46,12 +46,12 @@ class NetworkLstm(tnn.Module):
         self.hidden_dim = 100
         self.num_layers = 1
 
-        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True)
+        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True, num_layers=1)
         self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
 
         # self.hidden = torch.randn(2, 1, 64, 100)
-        self.hidden = torch.randn(self.num_layers, self.batch_size, self.hidden_dim)
+        self.hidden = torch.autograd.Variable(torch.randn(1, self.num_layers, self.batch_size, self.hidden_dim))
 
     def forward(self, input, length):
         """
@@ -69,8 +69,9 @@ class NetworkLstm(tnn.Module):
         # Length is 64
 
         # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
-        out, hidden = self.lstm_layer(input)
-        self.hidden = hidden[0]  # Hideen through out
+        out, hidden = self.lstm_layer(input, self.hidden)
+
+        self.hidden = hidden#[0]  # Hideen through out
         most_recent_hidden = hidden[1]
 
         # Out is 64 batch x 42 seq x 100 hidden

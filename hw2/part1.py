@@ -24,9 +24,8 @@ class rnn(torch.nn.Module):
         self.ih = torch.nn.Linear(n_inputs, n_neurons)
         self.hh = torch.nn.Linear(n_neurons, n_neurons)
 
-        #self.Wx = torch.randn(n_inputs, n_neurons)
-        #self.Wy = torch.randn(n_neurons, n_neurons)
-
+        self.W_ih = torch.randn(n_inputs, n_neurons)
+        self.W_hh = torch.randn(n_neurons, n_neurons)
 
     def rnnCell(self, input, hidden):
         """
@@ -36,11 +35,10 @@ class rnn(torch.nn.Module):
               some input (inputDim = 64) and the current hidden state
               (hiddenDim = 128), and return the new hidden state.
         """
-        self.Y0 = torch.tanh(torch.mm(input, self.ih))
-        self.Y1 = torch.tanh(torch.mm(self.Y0, self.hh) + torch.mm(hidden, self.ih))
-
-        return self.Y1
-
+        ht_minus_1 = torch.mm(self.W_ih, input)
+        ht = torch.mm(self.W_hh, hidden)
+        new_hidden_state = torch.tanh(ht_minus_1 + ht)
+        return new_hidden_state
 
     def forward(self, input):
         hidden = torch.zeros(128)
@@ -52,7 +50,14 @@ class rnn(torch.nn.Module):
               Return the final hidden state after the
               last input in the sequence has been processed.
         """
+        seq_length = input.size(0)
+        batch_size = input.size(1)
+        input_dim = input.size(2)
+
+        self.ih()
         h_t = torch.tanh(torch.mm(input, self.Wx) + torch.mm(hidden, self.Wy))
+
+
 
 class rnnSimplified(torch.nn.Module):
 
@@ -63,12 +68,12 @@ class rnnSimplified(torch.nn.Module):
               the network defined by this class is equivalent to the
               one defined in class "rnn".
         """
-        input_size=64
-        hidden_size=128
+        input_size = 64
+        hidden_size = 128
         self.net = torch.nn.RNN(input_size=input_size, hidden_size=hidden_size, batch_first=True)
 
     def forward(self, input):
-        out, hidden = self.net(input)
+        _, hidden = self.net(input)
         return hidden
 
 def lstm(input, hiddenSize):
