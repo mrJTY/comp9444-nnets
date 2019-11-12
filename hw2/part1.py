@@ -34,8 +34,8 @@ class rnn(torch.nn.Module):
               some input (inputDim = 64) and the current hidden state
               (hiddenDim = 128), and return the new hidden state.
         """
-        wih_x = self.ih(input) * self.W_ih
-        whh_hidden = self.hh(hidden) * self.W_hh
+        wih_x = self.ih(input) # * self.W_ih
+        whh_hidden = self.hh(hidden) # * self.W_hh
         new_hidden_state = torch.tanh(wih_x + whh_hidden)
         return new_hidden_state
 
