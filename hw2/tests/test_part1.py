@@ -47,3 +47,12 @@ def test_rnn_simplified():
     new_hidden = rnn.forward(input_vector)
 
     assert new_hidden.shape == torch.Size([1, 1, 128])
+
+def test_conv():
+    batch_size = 1
+    input_dim = 64
+    seq_len = 1
+    input_vector = torch.randn(batch_size, input_dim, seq_len,)
+    weight = torch.randn(batch_size, input_dim, seq_len)
+    result = p1.conv(input_vector, weight)
+    print(result)

@@ -93,4 +93,9 @@ def conv(input, weight):
           The convolution should be along the sequence axis.
           input is of size [batchSize, inputDim, seqLength]
     """
-    torch.nn.Conv1d
+    batch_size = input.shape[0]
+    input_dim = input.shape[1]
+    seq_len = input.shape[2]
+    x = input.reshape([batch_size, seq_len, input_dim])
+    w = weight.reshape([batch_size, seq_len, input_dim])
+    return torch.conv1d(input=x, weight=w)
