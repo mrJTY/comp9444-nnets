@@ -62,16 +62,11 @@ class rnnSimplified(torch.nn.Module):
               the network defined by this class is equivalent to the
               one defined in class "rnn".
         """
-        input_size = 64
-        hidden_size = 128
-
-        self.net = torch.nn.RNNCell(input_size=input_size, hidden_size=hidden_size, bias=False, nonlinearity='tanh')
+        self.net = torch.nn.RNN(input_size=64, hidden_size=128, num_layers=1)
 
     def forward(self, input):
         seq_len = input.size(0)
-        for i in range(0, seq_len):
-            x = input[i]
-            hidden = self.net(x)
+        _, hidden = self.net(input)
         return hidden
 
 
