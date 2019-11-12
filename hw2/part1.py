@@ -93,6 +93,9 @@ def conv(input, weight):
     batch_size = input.shape[0]
     input_dim = input.shape[1]
     seq_len = input.shape[2]
-    x = input.reshape([batch_size, seq_len, input_dim])
-    w = weight.reshape([batch_size, seq_len, input_dim])
-    return torch.conv1d(input=x, weight=w)
+
+    # Permuted to achieve the required size
+    # [batch_size, in_channels, sequence_length] (see docs).
+    # https://discuss.pytorch.org/t/how-to-convolve-along-a-single-axis/56353
+
+    return torch.conv1d(input=input, weight=weight)
