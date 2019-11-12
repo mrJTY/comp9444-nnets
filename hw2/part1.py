@@ -14,18 +14,17 @@ DOING SO MAY CAUSE YOUR CODE TO FAIL AUTOMATED TESTING.
 
 import torch
 
+
 class rnn(torch.nn.Module):
 
     def __init__(self):
         super(rnn, self).__init__()
 
-        n_inputs = 64
-        n_neurons = 128
-        self.ih = torch.nn.Linear(n_inputs, n_neurons)
-        self.hh = torch.nn.Linear(n_neurons, n_neurons)
+        self.ih = torch.nn.Linear(64, 128)
+        self.hh = torch.nn.Linear(128, 128)
 
-        self.W_ih = torch.randn(n_inputs, n_neurons)
-        self.W_hh = torch.randn(n_neurons, n_neurons)
+        self.W_ih = torch.randn(64)
+        self.W_hh = torch.randn(128)
 
     def rnnCell(self, input, hidden):
         """
@@ -35,8 +34,10 @@ class rnn(torch.nn.Module):
               some input (inputDim = 64) and the current hidden state
               (hiddenDim = 128), and return the new hidden state.
         """
-        ht_minus_1 = torch.mm(self.W_ih, input)
-        ht = torch.mm(self.W_hh, hidden)
+        x = self.ih(input)
+        x = self.hh(x)
+        ht_minus_1 = self.W_hh * x
+        ht = self.W_hh * hidden
         new_hidden_state = torch.tanh(ht_minus_1 + ht)
         return new_hidden_state
 
@@ -50,13 +51,8 @@ class rnn(torch.nn.Module):
               Return the final hidden state after the
               last input in the sequence has been processed.
         """
-        seq_length = input.size(0)
-        batch_size = input.size(1)
-        input_dim = input.size(2)
-
-        self.ih()
-        h_t = torch.tanh(torch.mm(input, self.Wx) + torch.mm(hidden, self.Wy))
-
+        new_hidden_state = self.rnnCell(input, hidden)
+        return new_hidden_state
 
 
 class rnnSimplified(torch.nn.Module):
@@ -76,6 +72,7 @@ class rnnSimplified(torch.nn.Module):
         _, hidden = self.net(input)
         return hidden
 
+
 def lstm(input, hiddenSize):
     """
     TODO: Let variable lstm be an instance of torch.nn.LSTM.
@@ -87,6 +84,7 @@ def lstm(input, hiddenSize):
     input_size = input.shape[2]
     cell = torch.nn.LSTM(input_size=input_size, hidden_size=hiddenSize, batch_first=True)
     return cell(input)
+
 
 def conv(input, weight):
     """
