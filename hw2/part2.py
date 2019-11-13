@@ -141,6 +141,7 @@ class NetworkCnn(tnn.Module):
         out_relu3 = torch.relu(out_conv3)
         # max_pool3  = torch.nn.functional.max_pool1d(out_relu3, kernel_size=4)
 
+        # TODO:
         out_max_pool_over_time = torch.zeros(batch_size, 1)
         for i in range(0, batch_size):
             out_max_pool_over_time[i][0] = torch.max(out_relu3[i])
