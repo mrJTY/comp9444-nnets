@@ -40,17 +40,20 @@ class NetworkLstm(tnn.Module):
         TODO:
         Create and initialise weights and biases for the layers.
         """
-
         self.input_dim = 50
-        self.batch_size = 64
         self.hidden_dim = 100
         self.num_layers = 1
-
-        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True, num_layers=self.num_layers)
+        self.batch_size = 64
+        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True,
+                                        num_layers=self.num_layers)
         self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
 
-
+    def zero_hidden(self, batch_size):
+        return (
+            torch.zeros(self.num_layers, batch_size, self.hidden_dim),
+            torch.zeros(self.num_layers, batch_size, self.hidden_dim)
+        )
 
     def forward(self, input, length):
         """
@@ -59,22 +62,11 @@ class NetworkLstm(tnn.Module):
         Create the forward pass through the network.
         """
 
-        # Input is 64x146x50
-        # Assume batch first
-        # Batch Size: 64
-        # Seq Length of a doc: 146 (varies)
-        # Input Size: 50
-
-        # Length is 64
-
         # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
 
-        # TODO: pass self.hidden of zeros
-        out, hidden = self.lstm_layer(input)
+        batch_size = input.size(0)
+        out, hidden = self.lstm_layer(input, self.zero_hidden(batch_size))
 
-        self.hidden = hidden[1]
-
-        # Pass to a 100 node fc
         fc2_output = self.fc2(out)
         relu_output = torch.relu(fc2_output)
 
@@ -82,12 +74,12 @@ class NetworkLstm(tnn.Module):
         softmax_output = torch.softmax(fc3_output, dim=1)
 
         # Get only the last output
-        out = torch.zeros(softmax_output.size(0))
-        for i in range(0, softmax_output.size(0)):
+        out = torch.zeros(batch_size)
+        for i in range(0, batch_size):
             out[i] = softmax_output[i][-1][0]
 
         # output must just be a single dimension 64 tensor(batch) x 1
-        assert out.shape() == torch.Size([64])
+        assert out.shape == torch.Size([batch_size])
         return out
 
 
