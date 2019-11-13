@@ -46,12 +46,11 @@ class NetworkLstm(tnn.Module):
         self.hidden_dim = 100
         self.num_layers = 1
 
-        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True, num_layers=1)
+        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True, num_layers=self.num_layers)
         self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
 
-        # self.hidden = torch.randn(2, 1, 64, 100)
-        self.hidden = torch.autograd.Variable(torch.randn(1, self.num_layers, self.batch_size, self.hidden_dim))
+
 
     def forward(self, input, length):
         """
@@ -69,12 +68,11 @@ class NetworkLstm(tnn.Module):
         # Length is 64
 
         # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
-        out, hidden = self.lstm_layer(input, self.hidden)
 
-        self.hidden = hidden#[0]  # Hideen through out
-        most_recent_hidden = hidden[1]
+        # TODO: pass self.hidden of zeros
+        out, hidden = self.lstm_layer(input)
 
-        # Out is 64 batch x 42 seq x 100 hidden
+        self.hidden = hidden[1]
 
         # Pass to a 100 node fc
         fc2_output = self.fc2(out)
@@ -83,13 +81,13 @@ class NetworkLstm(tnn.Module):
         fc3_output = self.fc3(relu_output)
         softmax_output = torch.softmax(fc3_output, dim=1)
 
-        # Hack to ignore the seq array
+        # Get only the last output
         out = torch.zeros(softmax_output.size(0))
         for i in range(0, softmax_output.size(0)):
-            out[i] = softmax_output[i][0][0]
+            out[i] = softmax_output[i][-1][0]
 
         # output must just be a single dimension 64 tensor(batch) x 1
-
+        assert out.shape() == torch.Size([64])
         return out
 
 
@@ -180,7 +178,7 @@ def main():
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
 
     # TODO: Change back to 10
-    for epoch in range(1):
+    for epoch in range(10):
         running_loss = 0
 
         for i, batch in enumerate(trainLoader):
