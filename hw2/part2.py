@@ -106,6 +106,10 @@ class NetworkCnn(tnn.Module):
         TODO:
         Create and initialise weights and biases for the layers.
         """
+        self.conv1 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
+        self.conv2 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
+        self.conv3 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
+        self.fc4 = torch.nn.Linear(in_features=50, out_features=1)
 
     def forward(self, input, length):
         """
@@ -113,6 +117,49 @@ class NetworkCnn(tnn.Module):
         TODO:
         Create the forward pass through the network.
         """
+
+        # Permute the seq length and dimension
+        # x must be [batch_size, features, seq_length]
+        x = input.permute(0, 2, 1)
+        batch_size = x.size(0)
+        input_size = x.size(1)
+        kernel_size_of_seq = int(x.size(2) / 2)
+
+        assert x.size(1) == 50
+
+        # FIXME : RuntimeError: Expected 3-dimensional input for 3-dimensional weight 50 50 8,
+        # but got 2-dimensional input of size [177, 50] instead
+        out_conv1 = self.conv1(x)
+        out_relu1 = torch.nn.functional.relu(out_conv1)
+        out_pool1 = torch.nn.functional.max_pool1d(out_relu1, kernel_size=4)
+
+        out_conv2 = self.conv2(out_pool1)
+        out_relu2 = torch.nn.functional.relu(out_conv2)
+        out_pool2 = torch.nn.functional.max_pool1d(out_relu2, kernel_size=4)
+
+        # Max pool picks the maximum convovled feauture over the sequence
+        out_conv3 = self.conv3(out_pool2)
+        out_relu3 = torch.nn.functional.relu(out_conv3)
+
+        done = False
+        while not done:
+            try:
+                out_max_pool_over_time = torch.nn.functional.max_pool1d(out_relu3, kernel_size=kernel_size_of_seq)
+                done = True
+            except RuntimeError:
+                kernel_size_of_seq = kernel_size_of_seq - 1
+
+        out_max_pool_over_time = out_max_pool_over_time.reshape(batch_size, input_size)
+
+        # Last fc
+        out_fc4 = self.fc4(out_max_pool_over_time)
+
+        # Softmax output
+        out_softmax = torch.nn.functional.softmax(out_fc4, dim=1)
+        out = out_softmax.reshape(batch_size)
+
+        return out
+
 
 
 def lossFunc():
@@ -164,7 +211,9 @@ def main():
                                                          sort_key=lambda x: len(x.text), sort_within_batch=True)
 
     # Create an instance of the network in memory (potentially GPU memory). Can change to NetworkCnn during development.
-    net = NetworkLstm().to(device)
+    # TODO: Switch back to NetworkLstm
+    # net = NetworkLstm().to(device)
+    net = NetworkCnn().to(device)
 
     criterion = lossFunc()
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
