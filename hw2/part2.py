@@ -153,9 +153,10 @@ class NetworkCnn(tnn.Module):
 
         # Last fc
         out_fc4 = self.fc4(out_max_pool_over_time)
+        out_fc4.reshape(batch_size)
 
         # Softmax output
-        out_softmax = torch.nn.functional.softmax(out_fc4, dim=1)
+        out_softmax = torch.softmax(out_fc4, dim=1)
         out = out_softmax.reshape(batch_size)
 
         return out
