@@ -40,18 +40,20 @@ class NetworkLstm(tnn.Module):
         TODO:
         Create and initialise weights and biases for the layers.
         """
-
         self.input_dim = 50
-        self.batch_size = 64
         self.hidden_dim = 100
-        self.num_layers = 1
-
-        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True, num_layers=1)
+        self.num_layers = 3
+        self.batch_size = 64
+        self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True,
+                                        num_layers=self.num_layers)
         self.fc2 = torch.nn.Linear(in_features=self.hidden_dim, out_features=64)
         self.fc3 = torch.nn.Linear(in_features=64, out_features=1)
 
-        # self.hidden = torch.randn(2, 1, 64, 100)
-        self.hidden = torch.autograd.Variable(torch.randn(1, self.num_layers, self.batch_size, self.hidden_dim))
+    def zero_hidden(self, batch_size):
+        return (
+            torch.zeros(self.num_layers, batch_size, self.hidden_dim),
+            torch.zeros(self.num_layers, batch_size, self.hidden_dim)
+        )
 
     def forward(self, input, length):
         """
@@ -60,36 +62,24 @@ class NetworkLstm(tnn.Module):
         Create the forward pass through the network.
         """
 
-        # Input is 64x146x50
-        # Assume batch first
-        # Batch Size: 64
-        # Seq Length of a doc: 146 (varies)
-        # Input Size: 50
-
-        # Length is 64
-
         # Reference: https://www.youtube.com/watch?v=ogZi5oIo4fI
-        out, hidden = self.lstm_layer(input, self.hidden)
 
-        self.hidden = hidden#[0]  # Hideen through out
-        most_recent_hidden = hidden[1]
+        batch_size = input.size(0)
+        out, hidden = self.lstm_layer(input, self.zero_hidden(batch_size))
 
-        # Out is 64 batch x 42 seq x 100 hidden
-
-        # Pass to a 100 node fc
         fc2_output = self.fc2(out)
         relu_output = torch.relu(fc2_output)
 
         fc3_output = self.fc3(relu_output)
         softmax_output = torch.softmax(fc3_output, dim=1)
 
-        # Hack to ignore the seq array
-        out = torch.zeros(softmax_output.size(0))
-        for i in range(0, softmax_output.size(0)):
-            out[i] = softmax_output[i][0][0]
+        # Get only the last output
+        out = torch.zeros(batch_size)
+        for i in range(0, batch_size):
+            out[i] = softmax_output[i][-1][0]
 
         # output must just be a single dimension 64 tensor(batch) x 1
-
+        assert out.shape == torch.Size([batch_size])
         return out
 
 
@@ -116,6 +106,10 @@ class NetworkCnn(tnn.Module):
         TODO:
         Create and initialise weights and biases for the layers.
         """
+        self.conv1 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
+        self.conv2 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
+        self.conv3 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
+        self.fc4 = torch.nn.Linear(in_features=1, out_features=1)
 
     def forward(self, input, length):
         """
@@ -123,6 +117,54 @@ class NetworkCnn(tnn.Module):
         TODO:
         Create the forward pass through the network.
         """
+
+        # Permute the seq length and dimension
+        # x must be [batch_size, features, seq_length]
+        x = input.permute(0, 2, 1)
+        batch_size = x.size(0)
+        input_size = x.size(1)
+        kernel_size_of_seq = int(x.size(2) / 2)
+
+        assert x.size(1) == 50
+
+        out_conv1 = self.conv1(x)
+        out_relu1 = torch.relu(out_conv1)
+        out_pool1 = torch.max_pool1d(out_relu1, kernel_size=4)
+
+        out_conv2 = self.conv2(out_pool1)
+        out_relu2 = torch.relu(out_conv2)
+        out_pool2 = torch.max_pool1d(out_relu2, kernel_size=4)
+        #out_pool2 = torch.nn.functional.max_pool1d(out_relu2, kernel_size=4)
+
+        # Max pool picks the maximum convovled feauture over the sequence
+        out_conv3 = self.conv3(out_pool2)
+        out_relu3 = torch.relu(out_conv3)
+        # max_pool3  = torch.nn.functional.max_pool1d(out_relu3, kernel_size=4)
+
+        out_max_pool_over_time = torch.zeros(batch_size, 1)
+        for i in range(0, batch_size):
+            out_max_pool_over_time[i][0] = torch.max(out_relu3[i])
+
+
+
+        # done = False
+        # while not done:
+        #     try:
+        #         out_max_pool_over_time = torch.nn.functional.max_pool1d(out_relu3, kernel_size=kernel_size_of_seq)
+        #         done = True
+        #     except RuntimeError:
+        #         kernel_size_of_seq = kernel_size_of_seq - 1
+        # out_max_pool_over_time = out_max_pool_over_time.reshape(batch_size, input_size)
+
+        # Last fc
+        out_fc4 = self.fc4(out_max_pool_over_time)
+
+        # Softmax output
+        out_softmax = torch.softmax(out_fc4, dim=1)
+        out = out_softmax.reshape(batch_size)
+
+        return out
+
 
 
 def lossFunc():
@@ -174,13 +216,15 @@ def main():
                                                          sort_key=lambda x: len(x.text), sort_within_batch=True)
 
     # Create an instance of the network in memory (potentially GPU memory). Can change to NetworkCnn during development.
-    net = NetworkLstm().to(device)
+    # TODO: Switch back to NetworkLstm
+    # net = NetworkLstm().to(device)
+    net = NetworkCnn().to(device)
 
     criterion = lossFunc()
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
 
     # TODO: Change back to 10
-    for epoch in range(1):
+    for epoch in range(10):
         running_loss = 0
 
         for i, batch in enumerate(trainLoader):
