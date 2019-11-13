@@ -42,7 +42,7 @@ class NetworkLstm(tnn.Module):
         """
         self.input_dim = 50
         self.hidden_dim = 100
-        self.num_layers = 1
+        self.num_layers = 3
         self.batch_size = 64
         self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True,
                                         num_layers=self.num_layers)
