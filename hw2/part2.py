@@ -109,7 +109,7 @@ class NetworkCnn(tnn.Module):
         self.conv1 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
         self.conv2 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
         self.conv3 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
-        self.fc4 = torch.nn.Linear(in_features=50, out_features=1)
+        self.fc4 = torch.nn.Linear(in_features=1, out_features=1)
 
     def forward(self, input, length):
         """
@@ -127,33 +127,37 @@ class NetworkCnn(tnn.Module):
 
         assert x.size(1) == 50
 
-        # FIXME : RuntimeError: Expected 3-dimensional input for 3-dimensional weight 50 50 8,
-        # but got 2-dimensional input of size [177, 50] instead
         out_conv1 = self.conv1(x)
-        out_relu1 = torch.nn.functional.relu(out_conv1)
-        out_pool1 = torch.nn.functional.max_pool1d(out_relu1, kernel_size=4)
+        out_relu1 = torch.relu(out_conv1)
+        out_pool1 = torch.max_pool1d(out_relu1, kernel_size=4)
 
         out_conv2 = self.conv2(out_pool1)
-        out_relu2 = torch.nn.functional.relu(out_conv2)
-        out_pool2 = torch.nn.functional.max_pool1d(out_relu2, kernel_size=4)
+        out_relu2 = torch.relu(out_conv2)
+        out_pool2 = torch.max_pool1d(out_relu2, kernel_size=4)
+        #out_pool2 = torch.nn.functional.max_pool1d(out_relu2, kernel_size=4)
 
         # Max pool picks the maximum convovled feauture over the sequence
         out_conv3 = self.conv3(out_pool2)
-        out_relu3 = torch.nn.functional.relu(out_conv3)
+        out_relu3 = torch.relu(out_conv3)
+        # max_pool3  = torch.nn.functional.max_pool1d(out_relu3, kernel_size=4)
 
-        done = False
-        while not done:
-            try:
-                out_max_pool_over_time = torch.nn.functional.max_pool1d(out_relu3, kernel_size=kernel_size_of_seq)
-                done = True
-            except RuntimeError:
-                kernel_size_of_seq = kernel_size_of_seq - 1
+        out_max_pool_over_time = torch.zeros(batch_size, 1)
+        for i in range(0, batch_size):
+            out_max_pool_over_time[i][0] = torch.max(out_relu3[i])
 
-        out_max_pool_over_time = out_max_pool_over_time.reshape(batch_size, input_size)
+
+
+        # done = False
+        # while not done:
+        #     try:
+        #         out_max_pool_over_time = torch.nn.functional.max_pool1d(out_relu3, kernel_size=kernel_size_of_seq)
+        #         done = True
+        #     except RuntimeError:
+        #         kernel_size_of_seq = kernel_size_of_seq - 1
+        # out_max_pool_over_time = out_max_pool_over_time.reshape(batch_size, input_size)
 
         # Last fc
         out_fc4 = self.fc4(out_max_pool_over_time)
-        out_fc4.reshape(batch_size)
 
         # Softmax output
         out_softmax = torch.softmax(out_fc4, dim=1)
