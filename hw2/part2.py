@@ -134,34 +134,20 @@ class NetworkCnn(tnn.Module):
         out_conv2 = self.conv2(out_pool1)
         out_relu2 = torch.relu(out_conv2)
         out_pool2 = torch.max_pool1d(out_relu2, kernel_size=4)
-        #out_pool2 = torch.nn.functional.max_pool1d(out_relu2, kernel_size=4)
 
         # Max pool picks the maximum convovled feauture over the sequence
         out_conv3 = self.conv3(out_pool2)
         out_relu3 = torch.relu(out_conv3)
-        # max_pool3  = torch.nn.functional.max_pool1d(out_relu3, kernel_size=4)
 
-        # TODO:
         out_max_pool_over_time = torch.zeros(batch_size, 1)
         for i in range(0, batch_size):
             out_max_pool_over_time[i][0] = torch.max(out_relu3[i])
 
-
-
-        # done = False
-        # while not done:
-        #     try:
-        #         out_max_pool_over_time = torch.nn.functional.max_pool1d(out_relu3, kernel_size=kernel_size_of_seq)
-        #         done = True
-        #     except RuntimeError:
-        #         kernel_size_of_seq = kernel_size_of_seq - 1
-        # out_max_pool_over_time = out_max_pool_over_time.reshape(batch_size, input_size)
-
         # Last fc
         out_fc4 = self.fc4(out_max_pool_over_time)
 
-        # Softmax output
-        out_softmax = torch.softmax(out_fc4, dim=1)
+        # Softmax output, normalise along the batch dimension = 0
+        out_softmax = torch.softmax(out_fc4, dim=0)
         out = out_softmax.reshape(batch_size)
 
         return out
