@@ -109,7 +109,7 @@ class NetworkCnn(tnn.Module):
         self.conv1 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
         self.conv2 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
         self.conv3 = torch.nn.Conv1d(in_channels=50, out_channels=50, kernel_size=8, padding=5)
-        self.fc4 = torch.nn.Linear(in_features=1, out_features=1)
+        self.fc4 = torch.nn.Linear(in_features=50, out_features=1)
 
     def forward(self, input, length):
         """
@@ -139,17 +139,19 @@ class NetworkCnn(tnn.Module):
         out_conv3 = self.conv3(out_pool2)
         out_relu3 = torch.relu(out_conv3)
 
-        out_max_pool_over_time = torch.zeros(batch_size, 1)
+        out_max_pool_over_time = torch.zeros(batch_size, input_size, 1)
         for i in range(0, batch_size):
-            out_max_pool_over_time[i][0] = torch.max(out_relu3[i])
+            for j in range(0, input_size):
+                out_max_pool_over_time[i][j][0] = torch.max(out_relu3[i][j])
 
         # Last fc
-        out_fc4 = self.fc4(out_max_pool_over_time)
+        out_fc4 = self.fc4(out_max_pool_over_time.reshape(batch_size, input_size))
+        drop_out = torch.nn.Dropout(p=0.2)
+        out_drop = drop_out(out_fc4)
 
         # Softmax output, normalise along the batch dimension = 0
-        out_softmax = torch.softmax(out_fc4, dim=0)
+        out_softmax = torch.softmax(out_drop, dim=0)
         out = out_softmax.reshape(batch_size)
-
         return out
 
 
