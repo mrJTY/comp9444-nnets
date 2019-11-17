@@ -12,7 +12,7 @@ class Network(tnn.Module):
         super(Network, self).__init__()
         self.input_dim = 50
         self.hidden_dim = 100
-        self.num_layers = 3
+        self.num_layers = 4
         self.batch_size = 64
         self.lstm_layer = torch.nn.LSTM(input_size=50, hidden_size=self.hidden_dim, batch_first=True,
                                         num_layers=self.num_layers)
@@ -27,27 +27,21 @@ class Network(tnn.Module):
         batch_size = input.size(0)
         lstm_out, hidden = self.lstm_layer(input, self.zero_hidden(batch_size))
 
-        lstm_out2 = torch.zeros(batch_size, self.hidden_dim)
+        # Take the final state of the lstm
+        lstm_out_final = torch.zeros(batch_size, self.hidden_dim)
         for i in range(0, batch_size):
-            # Take the last hidden state
-            lstm_out2[i] = lstm_out[i][-1]
+            lstm_out_final[i] = lstm_out[i][-1]
 
-        # TODO: this could be optimised by taking the last hidden output instead
-        fc2_output = self.fc2(lstm_out2)
+        # Pass to a fully connected network
+        fc2_output = self.fc2(lstm_out_final)
         relu2_output = torch.relu(fc2_output)
 
+        # Apply a dropout at the final fully connected layer
         fc3_output = self.fc3(relu2_output)
-        # relu3_output = torch.relu(fc3_output)
-        # softmax_output = torch.softmax(fc3_output, dim=1)
-
-        # Apply a dropout
         drop_out = torch.nn.Dropout(p=0.2)
         out_drop = drop_out(fc3_output)
 
         out = out_drop.reshape(batch_size)
-
-        # output must just be a single dimension 64 tensor(batch) x 1
-        # assert out.shape == torch.Size([batch_size])
         return out
 
     def zero_hidden(self, batch_size):
@@ -89,11 +83,10 @@ class PreProcessing():
                            'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now'}
 
         # x is a list of words
-        # Do some transformations to remove stop words
-
-        no_punct = [''.join([i for i in word if i.isalpha()]) for word in x ]
-        no_stop_words = [i for i in no_punct if i not in stop_words]
-        return no_stop_words
+        # Do some transformations to remove stop words and punctuations
+        no_stop_words = [i for i in x if i not in stop_words]
+        no_punct = [''.join([i for i in word if i.isalpha()]) for word in no_stop_words]
+        return no_punct
 
     def post(batch, vocab):
         """Called after numericalization but prior to vectorization
@@ -101,9 +94,7 @@ class PreProcessing():
         """
         return batch
 
-    # TODO:
     text_field = data.Field(lower=True, include_lengths=True, batch_first=True, preprocessing=pre, postprocessing=post)
-    # text_field = data.Field(lower=True, include_lengths=True, batch_first=True)
 
 
 def lossFunc():
@@ -135,7 +126,7 @@ def main():
     criterion = lossFunc()
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
 
-    for epoch in range(2):
+    for epoch in range(10):
         running_loss = 0
 
         for i, batch in enumerate(trainLoader):
