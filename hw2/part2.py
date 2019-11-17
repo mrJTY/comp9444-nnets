@@ -206,8 +206,8 @@ def main():
 
     # Create an instance of the network in memory (potentially GPU memory). Can change to NetworkCnn during development.
     # TODO: Switch back to NetworkLstm
-    # net = NetworkLstm().to(device)
-    net = NetworkCnn().to(device)
+    net = NetworkLstm().to(device)
+    # net = NetworkCnn().to(device)
 
     criterion = lossFunc()
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
@@ -246,6 +246,7 @@ def main():
 
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
+    torch.save(net.state_dict(), "./model2.pth")
     # Evaluate network on the test dataset.  We aren't calculating gradients, so disable autograd to speed up
     # computations and reduce memory usage.
     with torch.no_grad():

@@ -27,22 +27,25 @@ class Network(tnn.Module):
         Create the forward pass through the network.
         """
         batch_size = input.size(0)
-        out, hidden = self.lstm_layer(input, self.zero_hidden(batch_size))
+        lstm_out, hidden = self.lstm_layer(input, self.zero_hidden(batch_size))
+
+        lstm_out2 = torch.zeros(batch_size, self.hidden_dim)
+        for i in range(0, batch_size):
+            # Take the last hidden state
+            lstm_out2[i] = lstm_out[i][-1]
 
         # TODO: this could be optimised by taking the last hidden output instead
-        fc2_output = self.fc2(out)
-        relu_output = torch.relu(fc2_output)
+        fc2_output = self.fc2(lstm_out2)
+        relu2_output = torch.relu(fc2_output)
 
-        fc3_output = self.fc3(relu_output)
-        softmax_output = torch.softmax(fc3_output, dim=1)
+        fc3_output = self.fc3(relu2_output)
+        # relu3_output = torch.relu(fc3_output)
+        #softmax_output = torch.softmax(fc3_output, dim=1)
 
-        # Get only the last output
-        out = torch.zeros(batch_size)
-        for i in range(0, batch_size):
-            out[i] = softmax_output[i][-1][0]
+        out = fc3_output.reshape(batch_size)
 
         # output must just be a single dimension 64 tensor(batch) x 1
-        assert out.shape == torch.Size([batch_size])
+        #assert out.shape == torch.Size([batch_size])
         return out
 
     def zero_hidden(self, batch_size):
@@ -74,7 +77,7 @@ def lossFunc():
     Define a loss function appropriate for the above networks that will
     add a sigmoid to the output and calculate the binary cross-entropy.
     """
-    return torch.nn.BCELoss()
+    return torch.nn.BCEWithLogitsLoss()
 
 def main():
     # Use a GPU if available, as it should be faster.
