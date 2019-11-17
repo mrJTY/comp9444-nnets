@@ -1,11 +1,9 @@
-import numpy as np
 import torch
 import torch.nn as tnn
-import torch.nn.functional as F
 import torch.optim as topti
+from imdb_dataloader import IMDB
 from torchtext import data
 from torchtext.vocab import GloVe
-from imdb_dataloader import IMDB
 
 
 # Class for creating the neural network.
@@ -40,12 +38,16 @@ class Network(tnn.Module):
 
         fc3_output = self.fc3(relu2_output)
         # relu3_output = torch.relu(fc3_output)
-        #softmax_output = torch.softmax(fc3_output, dim=1)
+        # softmax_output = torch.softmax(fc3_output, dim=1)
 
-        out = fc3_output.reshape(batch_size)
+        # Apply a dropout
+        drop_out = torch.nn.Dropout(p=0.2)
+        out_drop = drop_out(fc3_output)
+
+        out = out_drop.reshape(batch_size)
 
         # output must just be a single dimension 64 tensor(batch) x 1
-        #assert out.shape == torch.Size([batch_size])
+        # assert out.shape == torch.Size([batch_size])
         return out
 
     def zero_hidden(self, batch_size):
@@ -56,20 +58,52 @@ class Network(tnn.Module):
 
 
 class PreProcessing():
+
     def pre(x):
         """Called after tokenization"""
 
+        # Source: https://gist.githubusercontent.com/sebleier/554280/raw/7e0e4a1ce04c2bb7bd41089c9821dbcf6d0c786c/NLTK's%2520list%2520of%2520english%2520stopwords
+        stop_words = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours',
+                           'yourself',
+                           'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its',
+                           'itself',
+                           'they', 'them',
+                           'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these',
+                           'those',
+                           'am', 'is',
+                           'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does',
+                           'did',
+                           'doing', 'a',
+                           'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by',
+                           'for',
+                           'with', 'about',
+                           'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to',
+                           'from',
+                           'up', 'down', 'in', 'out',
+                           'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when',
+                           'where',
+                           'why', 'how',
+                           'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+                           'not',
+                           'only', 'own',
+                           'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now'}
+
         # x is a list of words
         # Do some transformations to remove stop words
-        return x
+
+        no_punct = [''.join([i for i in word if i.isalpha()]) for word in x ]
+        no_stop_words = [i for i in no_punct if i not in stop_words]
+        return no_stop_words
 
     def post(batch, vocab):
-        """Called after numericalization but prior to vectorization"""
-        return batch, vocab
+        """Called after numericalization but prior to vectorization
+        Fixed: Should only return vocab
+        """
+        return batch
 
     # TODO:
-    #text_field = data.Field(lower=True, include_lengths=True, batch_first=True, preprocessing=pre, postprocessing=post)
-    text_field = data.Field(lower=True, include_lengths=True, batch_first=True)
+    text_field = data.Field(lower=True, include_lengths=True, batch_first=True, preprocessing=pre, postprocessing=post)
+    # text_field = data.Field(lower=True, include_lengths=True, batch_first=True)
 
 
 def lossFunc():
@@ -78,6 +112,7 @@ def lossFunc():
     add a sigmoid to the output and calculate the binary cross-entropy.
     """
     return torch.nn.BCEWithLogitsLoss()
+
 
 def main():
     # Use a GPU if available, as it should be faster.
@@ -97,7 +132,7 @@ def main():
                                                          sort_key=lambda x: len(x.text), sort_within_batch=True)
 
     net = Network().to(device)
-    criterion =lossFunc()
+    criterion = lossFunc()
     optimiser = topti.Adam(net.parameters(), lr=0.001)  # Minimise the loss using the Adam algorithm.
 
     for epoch in range(10):
@@ -156,6 +191,7 @@ def main():
     accuracy = 100 * num_correct / len(dev)
 
     print(f"Classification accuracy: {accuracy}")
+
 
 if __name__ == '__main__':
     main()
