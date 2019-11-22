@@ -1,0 +1,32 @@
+Applying simple tests to your submission...
+===========================================
+==================================== test session starts =====================================
+platform linux -- Python 3.7.3, pytest-3.0.6, py-1.4.32, pluggy-0.4.0 -- /usr/bin/python3
+cachedir: .cache
+rootdir: /var/tmp/.testgive4iHbwg, inifile:
+collected 8 items
+
+sub_test.py::test_rnnCell PASSED
+sub_test.py::test_rnn PASSED
+sub_test.py::test_rnnSimplified PASSED
+sub_test.py::test_lstm PASSED
+sub_test.py::test_conv PASSED
+sub_test.py::test_part2_networks PASSED
+sub_test.py::test_measures PASSED
+sub_test.py::test_part3
+Importing your code..
+Using device: cpu
+Loading Model..
+Creating Vocab objects..
+Loading submission test samples..
+Loaded 652 samples
+Evaluating model..
+Submission accuracy = 78.99%
+PASSED
+
+================================== 8 passed in 7.30 seconds ==================================
+
+Submission datestamp:	Fri Nov 22 23:26:30 2019
+Assignment deadline:	Sun Nov 24 23:59:59 2019
+This submission is 2 days early
+Your submission is ACCEPTED.
